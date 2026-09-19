@@ -1,129 +1,196 @@
 import reflex as rx
-from finance_app.data.models import ArticleData
-from finance_app.state.article_state import ArticleState
+from finance_app.data.content import ALL_ARTICLES, ArticleData
+from finance_app.state.habitat_state import HabitatState
 
-def article_player(article: ArticleData) -> rx.Component:
+
+class ArticlePlayerState(rx.State):
+    """Manages active article state and completion triggers."""
+
+    @rx.var
+    def active_article(self) -> ArticleData:
+        """Resolves active article based on dynamic URL route parameter."""
+        target_id = self.current_article_id
+        for article in ALL_ARTICLES:
+            if (
+                article.id == target_id
+                or article.id.lower().replace(" ", "-") == target_id
+            ):
+                return article
+        return ALL_ARTICLES[0]
+
+    # --- Computed Safe Property Exposers for Reflex Binding ---
+    @rx.var
+    def title(self) -> str:
+        return getattr(self.active_article, "title", "Article Title")
+
+    @rx.var
+    def category(self) -> str:
+        return getattr(self.active_article, "category", "Savings")
+
+    @rx.var
+    def read_time(self) -> str:
+        return getattr(self.active_article, "read_time", "3 min read")
+
+    @rx.var
+    def author_info(self) -> str:
+        return getattr(self.active_article, "author_info", "SproutFinance Team")
+
+    @rx.var
+    def intro_text(self) -> str:
+        return getattr(self.active_article, "intro_text", "")
+
+    @rx.var
+    def mid_text(self) -> str:
+        return getattr(self.active_article, "mid_text", "")
+
+    @rx.var
+    def closing_text(self) -> str:
+        return getattr(self.active_article, "closing_text", "")
+
+    @rx.var
+    def head_image_url(self) -> str:
+        label = getattr(self.active_article, "head_image_label", "default_article.png")
+        return f"/{label.lstrip('/')}"
+
+    @rx.var
+    def paragraph_photo_url(self) -> str:
+        label = getattr(self.active_article, "paragraph_photo_label", "default_article.png")
+        return f"/{label.lstrip('/')}"
+
+    @rx.var
+    def sources_list(self) -> list[str]:
+        return getattr(self.active_article, "sources", [])
+
+    async def complete_article_and_return(self):
+        """Awards +50 XP, updates habitat action log, and returns to dashboard."""
+        prev_stage = HabitatState.plant_stage
+        
+        # Award Growth XP
+        HabitatState.growth_xp += 50
+        HabitatState.last_action_log = f"📚 Read '{self.title}' (+50 XP)!"
+
+        # Check for Level Up
+        new_stage = HabitatState.plant_stage
+        if new_stage > prev_stage:
+            yield HabitatState.trigger_level_up_effects()
+
+        # Redirect back to main dashboard
+        yield rx.redirect("/")
+
+
+def article_player_page() -> rx.Component:
+    """Renders the full multi-section Article Reader matching the exact ArticleData schema."""
     return rx.box(
-        # --- Top Navigation Bar ---
-        rx.hstack(
-            rx.link(
-                rx.button(
-                    "← Back to Dashboard",
-                    class_name="bg-[#FAFAF9] text-[#064E3B] hover:bg-[#FFEDD5] font-bold text-xs uppercase tracking-wider py-2 px-4 border border-[#064E3B] rounded-none cursor-pointer"
-                ),
-                href="/"
-            ),
-            rx.text(
-                f"Section {ArticleState.current_step + 1} of 3",
-                class_name="text-xs font-bold text-[#064E3B] uppercase tracking-wider bg-[#FFEDD5] px-3 py-1 border border-[#064E3B]"
-            ),
-            rx.badge(
-                article.category,
-                class_name="bg-[#FB923C] text-[#FAFAF9] font-bold text-xs uppercase tracking-wider py-1 px-3 rounded-none"
-            ),
-            class_name="w-full justify-between items-center max-w-3xl mx-auto mb-6"
-        ),
-
-        # --- Progress Bar ---
-        rx.box(
-            rx.box(
-                class_name="bg-[#EAB308] h-full transition-all duration-500",
-                style={"width": f"{((ArticleState.current_step + 1) / 3) * 100}%"}
-            ),
-            class_name="w-full max-w-3xl mx-auto bg-[#FFEDD5] h-2 border border-[#064E3B] mb-6 rounded-none overflow-hidden"
-        ),
-
-        # --- Animated Dynamic Content Card ---
-        rx.box(
-            rx.vstack(
-                # Title Header
-                rx.vstack(
-                    rx.heading(
-                        article.title, 
-                        class_name="text-2xl md:text-3xl font-black text-[#064E3B] leading-tight"
-                    ),
-                    rx.text(f"⏱️ {article.read_time} • {article.author_info}", class_name="text-xs font-bold text-[#FB923C] uppercase tracking-wider"),
-                    class_name="w-full border-b-2 border-[#EAB308] pb-4 space-y-1"
-                ),
-
-                # STEP 0: INTRO
-                rx.cond(
-                    ArticleState.current_step == 0,
-                    rx.vstack(
-                        rx.box(
-                            rx.text(article.intro_text, class_name="text-lg text-[#064E3B] font-medium leading-relaxed"),
-                            class_name="w-full bg-[#FFEDD5] border-l-4 border-[#FB923C] p-5 rounded-none"
-                        ),
-                        rx.box(
-                            rx.vstack(
-                                rx.text("🌸 Visual Learning Graphic", class_name="text-xs uppercase tracking-widest font-bold text-[#FAFAF9]"),
-                                rx.text(article.head_image_label, class_name="text-md font-bold text-[#FAFAF9] text-center"),
-                                class_name="items-center justify-center h-40 w-full p-4"
-                            ),
-                            class_name="w-full bg-[#064E3B] border-2 border-[#064E3B] rounded-none"
-                        ),
-                        class_name="w-full space-y-4 animate-slide-up"
-                    )
-                ),
-
-                # STEP 1: MAIN BODY
-                rx.cond(
-                    ArticleState.current_step == 1,
-                    rx.vstack(
-                        rx.text(article.mid_text, class_name="text-base text-[#064E3B] leading-relaxed"),
-                        rx.box(
-                            rx.text(f"📊 Diagram: {article.paragraph_photo_label}", class_name="text-sm font-bold text-[#064E3B] text-center"),
-                            class_name="w-full bg-[#FAFAF9] border-2 border-[#064E3B] p-6 rounded-none"
-                        ),
-                        class_name="w-full space-y-4 animate-slide-up"
-                    )
-                ),
-
-                # STEP 2: CLOSING & CLAIM XP
-                rx.cond(
-                    ArticleState.current_step == 2,
-                    rx.vstack(
-                        rx.text(article.closing_text, class_name="text-base text-[#064E3B] leading-relaxed"),
-                        rx.box(
-                            rx.vstack(
-                                rx.heading("🎉 Lesson Complete!", class_name="text-lg font-bold text-[#064E3B]"),
-                                rx.text("Claim your Growth XP to level up your plant habitat stage on the dashboard.", class_name="text-xs text-[#064E3B]"),
-                                rx.button(
-                                    "🌱 Complete Lesson (+50 Growth XP)",
-                                    on_click=ArticleState.complete_lesson_and_return,
-                                    class_name="bg-[#FB923C] hover:bg-[#064E3B] text-[#FAFAF9] font-bold text-sm py-3 px-6 rounded-none border border-[#064E3B] transition-colors w-full cursor-pointer active:scale-95"
-                                ),
-                                class_name="items-center space-y-3 w-full"
-                            ),
-                            class_name="w-full bg-[#FFEDD5] border-2 border-[#064E3B] p-6 rounded-none"
-                        ),
-                        class_name="w-full space-y-4 animate-slide-up"
-                    )
-                ),
-
-                # Interactive Controls (Prev / Next)
-                rx.hstack(
+        rx.vstack(
+            # --- 1. Navigation Header ---
+            rx.hstack(
+                rx.link(
                     rx.button(
-                        "← Previous",
-                        on_click=ArticleState.prev_step,
-                        is_disabled=ArticleState.current_step == 0,
-                        class_name="bg-[#FAFAF9] text-[#064E3B] border border-[#064E3B] font-bold text-xs py-2.5 px-5 rounded-none disabled:opacity-40 cursor-pointer"
+                        "← Back to Habitat",
+                        class_name="bg-[#064E3B] text-[#FAFAF9] font-bold text-xs px-4 py-2 rounded-none hover:bg-[#FB923C] transition-colors cursor-pointer border border-[#FAFAF9]",
                     ),
-                    rx.cond(
-                        ArticleState.current_step < ArticleState.max_steps,
-                        rx.button(
-                            "Next Section →",
-                            on_click=ArticleState.next_step,
-                            class_name="bg-[#064E3B] hover:bg-[#FB923C] text-[#FAFAF9] font-bold text-xs py-2.5 px-5 rounded-none transition-colors cursor-pointer"
-                        ),
-                        # On final slide, "Next Section" disappears completely so the user focuses on "Complete Lesson"
-                        rx.box()
-                    ),
-                    class_name="w-full justify-between pt-6 border-t border-[#064E3B] mt-4"
+                    href="/",
                 ),
-                class_name="space-y-6 w-full"
+                rx.badge(
+                    "FINANCIAL EDUCATION MODULE",
+                    class_name="bg-[#EAB308] text-[#064E3B] font-bold px-3 py-1 rounded-none text-xs uppercase tracking-wider",
+                ),
+                class_name="w-full justify-between items-center pb-4 border-b-2 border-[#064E3B]",
             ),
-            class_name="w-full max-w-3xl mx-auto bg-[#FAFAF9] border-2 border-[#064E3B] p-8 rounded-none shadow-none"
+
+            # --- 2. Main Article Card ---
+            rx.box(
+                rx.vstack(
+                    # Header Image (head_image_label)
+                    rx.image(
+                        src=ArticlePlayerState.head_image_url,
+                        alt=ArticlePlayerState.title,
+                        class_name="w-full h-56 md:h-72 object-cover border-b-2 border-[#064E3B] rounded-none",
+                    ),
+                    
+                    # Article Meta Bar
+                    rx.vstack(
+                        rx.hstack(
+                            rx.badge(
+                                ArticlePlayerState.category,
+                                class_name="bg-[#064E3B] text-[#FAFAF9] font-bold rounded-none px-2.5 py-1 text-xs uppercase",
+                            ),
+                            rx.text(
+                                f"⏱️ {ArticlePlayerState.read_time}",
+                                class_name="text-xs font-bold text-[#FB923C]",
+                            ),
+                            rx.text(
+                                f"✍️ {ArticlePlayerState.author_info}",
+                                class_name="text-xs font-bold text-[#064E3B]/70",
+                            ),
+                            class_name="items-center space-x-3 flex-wrap",
+                        ),
+                        
+                        rx.heading(
+                            ArticlePlayerState.title,
+                            class_name="text-3xl font-black text-[#064E3B] tracking-tight pt-1",
+                        ),
+
+                        # Section 1: Intro Text
+                        rx.text(
+                            ArticlePlayerState.intro_text,
+                            class_name="text-base text-[#064E3B] leading-relaxed pt-3 border-t border-[#064E3B]/20 w-full font-medium",
+                        ),
+
+                        # Paragraph Photo (paragraph_photo_label)
+                        rx.box(
+                            rx.image(
+                                src=ArticlePlayerState.paragraph_photo_url,
+                                alt="Section Illustration",
+                                class_name="w-full h-48 md:h-64 object-cover border border-[#064E3B] my-2",
+                            ),
+                            class_name="w-full py-2",
+                        ),
+
+                        # Section 2: Mid Text
+                        rx.text(
+                            ArticlePlayerState.mid_text,
+                            class_name="text-base text-[#064E3B] leading-relaxed font-medium w-full",
+                        ),
+
+                        # Section 3: Closing Text
+                        rx.text(
+                            ArticlePlayerState.closing_text,
+                            class_name="text-base text-[#064E3B] leading-relaxed font-medium pt-2 w-full",
+                        ),
+
+                        # Section 4: Sources List
+                        rx.vstack(
+                            rx.text(
+                                "📖 Sources & References:",
+                                class_name="text-xs font-black text-[#064E3B] uppercase tracking-wider",
+                            ),
+                            rx.foreach(
+                                ArticlePlayerState.sources_list,
+                                lambda source: rx.text(
+                                    f"• {source}",
+                                    class_name="text-xs text-[#064E3B]/80 font-mono",
+                                ),
+                            ),
+                            class_name="w-full bg-[#FFEDD5] p-4 border border-[#064E3B] mt-4 space-y-1 items-start",
+                        ),
+
+                        # Claim Reward Button
+                        rx.box(
+                            rx.button(
+                                "🎉 Finish Lesson (+50 Growth XP)",
+                                on_click=ArticlePlayerState.complete_article_and_return,
+                                class_name="w-full bg-[#064E3B] hover:bg-[#FB923C] text-[#FAFAF9] font-black py-4 px-6 rounded-none text-sm uppercase tracking-wider cursor-pointer border border-[#064E3B] transition-colors",
+                            ),
+                            class_name="w-full pt-6",
+                        ),
+                        class_name="p-6 space-y-4 w-full items-start",
+                    ),
+                    class_name="space-y-0 w-full",
+                ),
+                class_name="bg-[#FAFAF9] border-2 border-[#064E3B] rounded-none w-full max-w-3xl mx-auto overflow-hidden mt-6",
+            ),
+            class_name="max-w-4xl mx-auto space-y-4",
         ),
-        class_name="min-h-screen bg-[#FAFAF9] p-6 font-sans"
+        class_name="min-h-screen bg-[#FAFAF9] p-6 md:p-10 font-sans",
     )

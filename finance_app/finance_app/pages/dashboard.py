@@ -1,5 +1,5 @@
 import reflex as rx
-from finance_app.components import impulse_sandbox_widget
+from finance_app.components.sandbox_widget import impulse_sandbox_widget
 from finance_app.data.content import ALL_ARTICLES
 from finance_app.pages.habitat import habitat_component
 from finance_app.state.habitat_state import HabitatState
@@ -17,7 +17,7 @@ def dashboard_page() -> rx.Component:
                 ),
                 class_name="items-center space-x-2",
             ),
-            # Gardener Badge (Streak removed, rank updates dynamically with plant stage)
+            # Dynamic Gardener Rank Badge
             rx.badge(
                 HabitatState.gardener_rank,
                 class_name="bg-[#EAB308] text-[#064E3B] font-bold px-4 py-1.5 rounded-none text-xs uppercase tracking-wider border border-[#FAFAF9]",
@@ -34,7 +34,7 @@ def dashboard_page() -> rx.Component:
                             "Visual Ecosystem",
                             class_name="text-xl font-bold text-[#FAFAF9] border-b-2 border-[#EAB308] pb-1 w-full",
                         ),
-                        # Embedded Habitat Component (Inner box holding the flower remains cream/white)
+                        # Embedded Habitat Component (Inner box holding flower stays white)
                         habitat_component(),
                         rx.text(
                             "Your financial habits are keeping your ecosystem healthy and resilient!",
@@ -45,10 +45,11 @@ def dashboard_page() -> rx.Component:
                     # Outer ecosystem container styled in dark green (#064E3B)
                     class_name="bg-[#064E3B] border-2 border-[#064E3B] p-6 rounded-none shadow-none w-full",
                 ),
-                # --- Right Column: Simulation & Action Hub ---
+                # --- Right Column: Interactive Simulation & Sandboxes ---
                 rx.vstack(
+                    # Emergency Shield Simulator Component
                     impulse_sandbox_widget(),
-                    # Fast Financial Metrics
+                    # Dynamic Financial Metrics Sandbox
                     rx.box(
                         rx.vstack(
                             rx.heading(
@@ -58,23 +59,27 @@ def dashboard_page() -> rx.Component:
                             rx.hstack(
                                 rx.vstack(
                                     rx.text(
-                                        "Credit Score Projection",
+                                        "Credit Score Shield",
                                         class_name="text-xs text-[#064E3B] font-semibold",
                                     ),
-                                    rx.text(
-                                        "720 (+15 pts)",
-                                        class_name="text-xl font-black text-[#064E3B]",
+                                    rx.heading(
+                                        rx.cond(
+                                            HabitatState.is_healthy,
+                                            "740 (Optimal)",
+                                            "620 (At Risk)",
+                                        ),
+                                        class_name="text-lg font-black text-[#064E3B]",
                                     ),
                                     class_name="p-3 bg-[#FAFAF9] border border-[#064E3B] rounded-none flex-1",
                                 ),
                                 rx.vstack(
                                     rx.text(
-                                        "5-Yr Compound Yield",
+                                        "Annual APY Interest",
                                         class_name="text-xs text-[#064E3B] font-semibold",
                                     ),
-                                    rx.text(
-                                        "$1,280 projected",
-                                        class_name="text-xl font-black text-[#EAB308]",
+                                    rx.heading(
+                                        f"${(HabitatState.savings_balance * 0.045):.2f} / yr",
+                                        class_name="text-lg font-black text-[#FB923C]",
                                     ),
                                     class_name="p-3 bg-[#FAFAF9] border border-[#064E3B] rounded-none flex-1",
                                 ),
@@ -116,7 +121,7 @@ def dashboard_page() -> rx.Component:
                                     ),
                                     class_name="bg-[#FAFAF9] border-2 border-[#064E3B] p-4 rounded-none hover:bg-[#FFEDD5] transition-colors cursor-pointer h-full",
                                 ),
-                                href=f"/learn/{article.id}",
+                                href=f"/learn/{article.id.lower().replace(' ', '-')}",
                                 class_name="w-full",
                             )
                             for article in ALL_ARTICLES

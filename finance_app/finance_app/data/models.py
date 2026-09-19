@@ -15,3 +15,9 @@ class ArticleData:
     paragraph_photo_label: str
     sources: List[str]
 
+    @property
+    def image_url(self) -> str:
+        """Ensures a clean path starting with '/' for Reflex static asset loading."""
+        filename = self.image_filename.lstrip("/")
+        return f"/{filename}"
+
