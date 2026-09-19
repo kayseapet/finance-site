@@ -12,7 +12,7 @@ CREDIT_READINESS= ArticleData(
     mid_text="Before you apply, write down your answers to three questions: What will I use the card for? How much can I repay without borrowing from somewhere else? When will I check the statement? Next, look at the fees and terms, not just the rewards. A small study by Lim and others found that rewards and loose spending limits can lead young people to overspend. This is a warning, not a prediction about you. (Lim et al., 2014) If you do not have much credit history, a secured card could be an option. It usually needs a deposit and may have fees or high interest rates. (CFPB, How to Rebuild Your Credit) Ask the card company how the deposit works, if they report payments to credit bureaus, and what you need to do to get your deposit back.",
     closing_text="Aim to pay your full statement balance by the due date. If your card has a grace period, paying in full and on time helps you avoid interest. But if you carry a balance, you could lose that benefit. (CFPB, Grace Periods) Your first card does not have to pay for a new lifestyle. It can just cover a small expense you already know how to handle. Make a simple rule for yourself: I will use this card only for ___, set aside the money to pay it back, and check it every ___.” If you are not sure how to fill in the blanks, keep practicing before you apply.",
     head_image_label="readycredit",
-    paragraph_photo_label="ready credit",
+    paragraph_photo_label="ready credit-2",
     sources=["Lim et al.: Understanding Young Consumer Perceptions on Credit Card Usage"
              "CFPB: How to Rebuild Your Credit"
              "CFPB: What Is a Grace Period for a Credit Card?"]
