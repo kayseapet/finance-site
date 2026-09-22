@@ -3,6 +3,14 @@
 **SproutFinance** is a gamified financial education platform built with [Reflex](https://reflex.dev/). It combines interactive savings and emergency shield simulations with an educational module reader that rewards users with **Growth XP**, leveling up a visual plant ecosystem in real-time as healthy financial habits are built.
 
 ---
+## Features
+* Review the learning modules to increase your financial literacy, and grow your flower!
+* Simulate spending habits and impact your flower's health
+### Demo
+
+https://github.com/user-attachments/assets/8c7c2265-2005-4a91-b8c1-d883efe4b61b
+
+
 
 ## 🛠️ Prerequisites
 
